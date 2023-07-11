@@ -27,7 +27,7 @@ protoc --proto_path={yourpath}:. --go_api_out=:. *.proto
 
 最新版本的protoc-gen-go要求go_package必须含有/，且会生成到$GOPATH/src目录下，所以建议把工程文件放到$GOPATH/src/git域名/git_group/目录下。
 
-如 https://github.com/dev-openapi/wxmp 则该工程文件为 $GOPATH/src/github.com/dev-openapi/wxmp
+如 https://github.com/dev-openapi/wx-miniprogram 则该工程文件为 $GOPATH/src/github.com/dev-openapi/wx-miniprogram
 
 另外，也可以指定protoc-gen-go的生成目录和设置source_relative相关配置，也可以生成到指定目录
 
