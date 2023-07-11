@@ -47,6 +47,7 @@ func Gen(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, error
 			Content: proto.String(bs),
 		})
 	}
+	optdata.Version = Version
 	bs, err := buildOptionsCode(optdata)
 	if err != nil {
 		return nil, err

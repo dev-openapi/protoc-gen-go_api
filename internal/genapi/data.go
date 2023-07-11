@@ -46,6 +46,7 @@ type CodeData struct {
 
 type OptionData struct {
 	GoPackage string
+	Version   string
 }
 
 // unexport 把首字母转小写
