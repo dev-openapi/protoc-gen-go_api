@@ -19,6 +19,7 @@ func Gen(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, error
 	}
 	var resp plugin.CodeGeneratorResponse
 	optdata := &OptionData{}
+	var fname string
 	for _, f := range req.GetProtoFile() {
 		if !strContains(req.GetFileToGenerate(), f.GetName()) {
 			continue
@@ -35,6 +36,9 @@ func Gen(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, error
 			return nil, err
 		}
 		name := fmt.Sprintf("%s.api.go", strings.ReplaceAll(f.GetName(), ".proto", ""))
+		if len(fname) <= 0 {
+			fname = path.Dir(f.GetName())
+		}
 		if len(opts.out) > 0 {
 			name = path.Join(opts.out, name)
 		}
@@ -47,8 +51,11 @@ func Gen(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, error
 	if err != nil {
 		return nil, err
 	}
+	if len(opts.out) > 0 {
+		fname = path.Join(opts.out, fname, "option.go")
+	}
 	resp.File = append(resp.File, &plugin.CodeGeneratorResponse_File{
-		Name:    proto.String("option.go"),
+		Name:    proto.String(fname),
 		Content: proto.String(bs),
 	})
 	return &resp, nil

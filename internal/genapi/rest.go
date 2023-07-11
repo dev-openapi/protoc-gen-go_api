@@ -27,6 +27,7 @@ func genRestMethodCode(fd *descriptor.FileDescriptorProto, serv *descriptor.Serv
 	}
 
 	data := &CodeData{}
+	data.Verb = strings.ToUpper(rest.verb)
 
 	tokens := buildRoute(rest)
 	route := rest.route
@@ -118,7 +119,7 @@ func buildRoute(rest *restInfo) []string {
 
 func buildQuery(m *descriptor.MethodDescriptorProto) []string {
 	params := buildParams(m)
-	str := "params.Add(%s, %s)"
+	str := `params.Add("%s", %s)`
 	return formParams(str, params)
 }
 

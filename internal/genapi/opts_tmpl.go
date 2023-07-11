@@ -2,8 +2,8 @@ package genapi
 
 import (
 	"bytes"
-	"html/template"
 	"log"
+	"text/template"
 )
 
 var optsCode = `package {{ .GoPackage }}
@@ -11,6 +11,8 @@ var optsCode = `package {{ .GoPackage }}
 import (
 	"net/http"
 	"errors"
+	"io/ioutil"
+	"encoding/json"
 )
 
 type Option func(*Options)
@@ -48,7 +50,7 @@ func newOptions(opts ...Option) *Options {
 
 func buildOptions(opt *Options, opts ...Option) *Options {
 	res := newOptions(opts...)
-	if len(res.addr) <= 0 {
+	if len(res.addr) == 0 {
 		res.addr = opt.addr
 	}
 	return res
@@ -65,7 +67,7 @@ func doResponse(resp *http.Response, a interface{}) error {
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return ErrNot200
 	}
-	defer func(){_ = resp.Body.Close()}()
+	defer func(){ _ = resp.Body.Close()}()
 	bs, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
