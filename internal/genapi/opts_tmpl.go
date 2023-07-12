@@ -15,12 +15,13 @@ import (
 	"errors"
 	"io/ioutil"
 	"encoding/json"
+	"context"
 )
 
 type Option func(*Options)
 
-type FnRequest func(*http.Client,*http.Request) (*http.Response, error)
-type FnResponse func(*http.Response, interface{}) error
+type FnRequest func(context.Context, *http.Client,*http.Request) (*http.Response, error)
+type FnResponse func(context.Context, *http.Response, interface{}) error
 
 var (
 	ErrNil = errors.New("resp nil")
@@ -58,11 +59,11 @@ func buildOptions(opt *Options, opts ...Option) *Options {
 	return res
 }
 
-func doRequest(client *http.Client, req *http.Request) (*http.Response, error) {
+func doRequest(_ context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
 	return client.Do(req)
 }
 
-func doResponse(resp *http.Response, a interface{}) error {
+func doResponse(_ context.Context, resp *http.Response, a interface{}) error {
 	if resp == nil {
 		return ErrNil
 	}
