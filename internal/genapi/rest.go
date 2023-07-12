@@ -102,7 +102,12 @@ func buildBodyForm(m *descriptor.MethodDescriptorProto, rest *restInfo) []string
 		}
 	}
 	fmtKey := "bodyForms[%q] = %s"
-	return formParams(fmtKey, queryParams)
+	var parents []string
+
+	if rest.body != "*" && rest.body != "" {
+		parents = append(parents, rest.body)
+	}
+	return formParams(fmtKey, queryParams, parents...)
 }
 
 func buildRoute(rest *restInfo) []string {
@@ -254,7 +259,7 @@ func lookupField(msgName, field string) *descriptor.FieldDescriptorProto {
 	return desc
 }
 
-func formParams(fmtKey string, queryParams map[string]*descriptor.FieldDescriptorProto) []string {
+func formParams(fmtKey string, queryParams map[string]*descriptor.FieldDescriptorProto, parents ...string) []string {
 	// We want to iterate over fields in a deterministic order
 	// to prevent spurious deltas when regenerating gapics.
 	fields := make([]string, 0, len(queryParams))
@@ -263,11 +268,12 @@ func formParams(fmtKey string, queryParams map[string]*descriptor.FieldDescripto
 	}
 	sort.Strings(fields)
 	params := make([]string, 0, len(fields))
+	parentGet := fieldGetter(strings.Join(parents, "."))
 
 	for _, path := range fields {
 		field := queryParams[path]
 		required := isRequired(field)
-		accessor := fieldGetter(path)
+		accessor := fieldGetter(strings.Join(append(parents, path), "."))
 		singularPrimitive := field.GetType() != fieldTypeMessage &&
 			field.GetType() != fieldTypeBytes &&
 			field.GetLabel() != fieldLabelRepeated
@@ -299,8 +305,8 @@ func formParams(fmtKey string, queryParams map[string]*descriptor.FieldDescripto
 			// It's a slice, so check for len > 0, nil slice returns 0.
 			params = append(params, fmt.Sprintf("if items := in%s; len(items) > 0 {", accessor))
 			b := strings.Builder{}
-			b.WriteString("for _, item := range items {\n")
-			b.WriteString(fmt.Sprintf(fmtKey, key, fmt.Sprintf("fmt.Sprintf(%q, item)\n", "%v")))
+			b.WriteString("for _, item := range items {\n\t\t\t")
+			b.WriteString(fmt.Sprintf(fmtKey, key, fmt.Sprintf("fmt.Sprintf(%q, item)\n\t\t", "%v")))
 			b.WriteString("}")
 			paramAdd = b.String()
 
@@ -313,16 +319,20 @@ func formParams(fmtKey string, queryParams map[string]*descriptor.FieldDescripto
 			params = append(params, fmt.Sprintf("if in%s != nil && in%s != nil {", parentField, directLeafField))
 		} else {
 			// Default values are type specific
+			str := "if in"
+			if len(parents) > 0 {
+				str = fmt.Sprintf("if in%s != nil && in", parentGet)
+			}
 			switch field.GetType() {
 			// Degenerate case, field should never be a message because that implies it's not a leaf.
 			case fieldTypeMessage, fieldTypeBytes:
-				params = append(params, fmt.Sprintf("if in%s != nil {", accessor))
+				params = append(params, fmt.Sprintf(`%s%s != nil {`, str, accessor))
 			case fieldTypeString:
-				params = append(params, fmt.Sprintf(`if in%s != "" {`, accessor))
+				params = append(params, fmt.Sprintf(`%s%s != "" {`, str, accessor))
 			case fieldTypeBool:
-				params = append(params, fmt.Sprintf(`if in%s {`, accessor))
+				params = append(params, fmt.Sprintf(`%s%s {`, str, accessor))
 			default: // Handles all numeric types including enums
-				params = append(params, fmt.Sprintf(`if in%s != 0 {`, accessor))
+				params = append(params, fmt.Sprintf(`%s%s != 0 {`, str, accessor))
 			}
 		}
 		params = append(params, fmt.Sprintf("\t%s", paramAdd))

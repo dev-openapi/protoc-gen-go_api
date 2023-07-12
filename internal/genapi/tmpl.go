@@ -103,7 +103,7 @@ var bodyFormCode = `bodyForms := make(map[string]string)
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
 `
 
-var bodyMultiCode = `bodyForms := make(map[string]string])
+var bodyMultiCode = `bodyForms := make(map[string]string)
 	{{ .Body | html }}
 	var bs []string
 	for k, v := range bodyForms {
