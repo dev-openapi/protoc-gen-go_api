@@ -27,6 +27,7 @@ var _ = io.Copy
 var _ = bytes.Compare
 var _ = json.Marshal
 var _ = strings.Compare
+var _ = fmt.Errorf
 
 {{ range .Services }}
 // Client API for {{ .ServName }} service

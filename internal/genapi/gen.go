@@ -31,6 +31,9 @@ func Gen(req *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, error
 		if len(optdata.GoPackage) == 0 {
 			optdata.GoPackage = data.GoPackage
 		}
+		if len(data.Services) <= 0 {
+			continue
+		}
 		bs, err := buildFrame(data)
 		if err != nil {
 			return nil, err
