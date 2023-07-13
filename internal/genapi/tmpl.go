@@ -19,6 +19,8 @@ import (
 	bytes "bytes"
 	http "net/http"
 	strings "strings"
+	url "net/url"
+	multipart "mime/multipart"
 )
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = context.Background
@@ -28,6 +30,8 @@ var _ = bytes.Compare
 var _ = json.Marshal
 var _ = strings.Compare
 var _ = fmt.Errorf
+var _ = url.Parse
+var _ = multipart.ErrMessageTooLarge
 
 {{ range .Services }}
 // Client API for {{ .ServName }} service
@@ -68,11 +72,14 @@ var requestCode = `// options
 	opt := buildOptions(c.opts, opts...)
 	headers := make(map[string]string)
 	// route
-	{{ .RouteCode | html }}
+	{{ .RouteCode }}
 	// body
-	var body io.Reader
-	{{ .BodyCode | html }}
+	{{ .BodyCode }}
+	{{- if eq .BodyCode "" -}}
+	req, err := http.NewRequest("{{ .Verb }}", rawURL, nil)
+	{{- else }}
 	req, err := http.NewRequest("{{ .Verb }}", rawURL, body)
+	{{- end }}
 	if err != nil {
 		return nil, err
 	}
@@ -93,23 +100,16 @@ var requestCode = `// options
 	return &res, err 
 `
 
-var bodyFormCode = `bodyForms := make(map[string]string)
-	{{ .Body | html }}
-	var bs []string
-	for k, v := range bodyForms {
-		bs = append(bs, fmt.Sprintf("%s=%s", k, v))
-	}
-	body = strings.NewReader(strings.Join(bs, "&"))
+var bodyFormCode = `bodyForms := url.Values{} 
+	{{ .Body }}
+	body := strings.NewReader(bodyForms.Encode())
 	headers["Content-Type"] = "application/x-www-form-urlencoded"
 `
 
-var bodyMultiCode = `bodyForms := make(map[string]string)
-	{{ .Body | html }}
-	var bs []string
-	for k, v := range bodyForms {
-		bs = append(bs, fmt.Sprintf("%s=%s", k, v))
-	}
-	body = strings.NewReader(strings.Join(bs, "&"))
+var bodyMultiCode = `body := new(bytes.Buffer)
+	bodyForms := multipart.NewWriter(body) 
+	{{ .Body }}
+	defer func() { _ =  bodyForms.Close() } ()
 	headers["Content-Type"] = "multipart/form-data"
 `
 
@@ -117,7 +117,7 @@ var bodyJsonCode = `bs, err := json.Marshal({{ .Body | html }})
 	if err != nil {
 		return nil, err
 	}
-	body = bytes.NewReader(bs)
+	body := bytes.NewReader(bs)
 	headers["Content-Type"] = "application/json"
 `
 

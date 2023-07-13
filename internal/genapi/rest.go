@@ -65,13 +65,13 @@ func buildBody(m *descriptor.MethodDescriptorProto, rest *restInfo) string {
 	var bc string
 	switch typ {
 	case BODY_FORM:
-		forms := buildBodyForm(m, rest)
+		forms := buildBodyForm(m, rest, false)
 		if len(forms) <= 0 {
 			break
 		}
 		bc, _ = buildBodyFormCode(strings.Join(forms, "\n\t"))
 	case BODY_MULTI:
-		forms := buildBodyForm(m, rest)
+		forms := buildBodyForm(m, rest, true)
 		if len(forms) <= 0 {
 			break
 		}
@@ -83,7 +83,7 @@ func buildBody(m *descriptor.MethodDescriptorProto, rest *restInfo) string {
 	return code.String()
 }
 
-func buildBodyForm(m *descriptor.MethodDescriptorProto, rest *restInfo) []string {
+func buildBodyForm(m *descriptor.MethodDescriptorProto, rest *restInfo, multi bool) []string {
 	queryParams := map[string]*descriptor.FieldDescriptorProto{}
 	request := descInfo.Type[m.GetInputType()].(*descriptor.DescriptorProto)
 	if rest.body != "*" {
@@ -101,7 +101,10 @@ func buildBodyForm(m *descriptor.MethodDescriptorProto, rest *restInfo) []string
 			queryParams[path] = leaf
 		}
 	}
-	fmtKey := "bodyForms[%q] = %s"
+	fmtKey := "bodyForms.Add(%q, %s)"
+	if multi {
+		fmtKey = `bodyForms.WriteField(%q, %s)`
+	}
 	var parents []string
 
 	if rest.body != "*" && rest.body != "" {

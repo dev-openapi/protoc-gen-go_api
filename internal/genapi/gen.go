@@ -112,6 +112,7 @@ func parseRestMethod(fd *descriptor.FileDescriptorProto, serv *descriptor.Servic
 		ReqTyp:   typeName(meth.GetInputType()),
 		ResTyp:   typeName(meth.GetOutputType()),
 	}
+	data.Comment = strings.ReplaceAll(data.Comment, "\n", "\n\t//")
 	switch {
 	case meth.GetClientStreaming():
 		data.ReqCode = fmt.Sprintf(noClientStream, meth.GetName())
