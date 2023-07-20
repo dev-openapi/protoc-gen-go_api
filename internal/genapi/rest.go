@@ -76,6 +76,8 @@ func buildBody(m *descriptor.MethodDescriptorProto, rest *restInfo) string {
 			break
 		}
 		bc, _ = buildBodyMultiCode(strings.Join(forms, "\n\t"))
+	case BODY_BYTE:
+		bc, _ = buildBodyByteCode(body)
 	default:
 		bc, _ = buildBodyJsonCode(body)
 	}

@@ -14,6 +14,7 @@ const (
 	BODY_JSON  = "json"
 	BODY_FORM  = "form"
 	BODY_MULTI = "multi"
+	BODY_BYTE  = "byte"
 )
 
 const (

@@ -121,6 +121,10 @@ var bodyJsonCode = `bs, err := json.Marshal({{ .Body | html }})
 	headers["Content-Type"] = "application/json"
 `
 
+var bodyByteCode = `body := bytes.NewReader({{ .Body }})
+	headers["Content-Type"] = "application/json"
+`
+
 func buildFrame(data *FileData) (string, error) {
 	frm, err := template.New("frame_tmpl").Funcs(fn).Parse(frame)
 	if err != nil {
@@ -201,4 +205,21 @@ func buildBodyJsonCode(body string) (string, error) {
 	}
 	return bs.String(), nil
 
+}
+
+func buildBodyByteCode(body string) (string, error) {
+	bbt, err := template.New("body_byte_tmpl").Funcs(fn).Parse(bodyByteCode)
+	if err != nil {
+		log.Println("parse byte code template err: ", err)
+		return "", err
+	}
+	bs := new(bytes.Buffer)
+	err = bbt.Execute(bs, map[string]string{
+		"Body": body,
+	})
+	if err != nil {
+		log.Println("execute byte code template err: ", err)
+		return "", err
+	}
+	return bs.String(), nil
 }
